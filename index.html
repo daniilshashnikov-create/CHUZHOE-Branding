@@ -228,24 +228,94 @@
     .reveal{opacity:1;transform:none}
   }
 
-  /* ---------- ADAPTIVE ---------- */
+  /* ---------- ADAPTIVE ----------
+     Брейкпоинты по контенту: ≤1024 планшет горизонтально, ≤900 планшет вертикально,
+     ≤720 меню-бургер, ≤600 телефон, ≤380 маленький телефон. */
+
+  /* высота экрана на мобильных: svh не «прыгает» при скрытии адресной строки */
+  @supports (height:100svh){
+    .hero{min-height:100svh}
+    .panel:last-of-type{min-height:100svh}
+  }
+  .title,.hero h1,.lead{text-wrap:balance}
+  a,button,.card-light,.card-dark,.card-about,.tile,.contact,.hero-logo{-webkit-tap-highlight-color:transparent}
+
+  /* на сенсорных экранах нет наведения — убираем «залипающие» hover-сдвиги,
+     выделение по тапу (.selected) остаётся */
+  @media (hover:none){
+    .btn:hover,.card-light:not(.selected):hover,.card-dark:not(.selected):hover,
+    .contact:not(.selected):hover{transform:none}
+    .tile:hover img{transform:none}
+    .contact:hover span::after{opacity:0}
+    /* «Обсудить проект» перекрашивается в момент нажатия */
+    .big-cta:active{transform:scale(.97);animation:none;box-shadow:0 0 0 2px rgba(255,255,255,.25), 0 0 80px rgba(43,63,214,.75)}
+    .big-cta:active::before{opacity:1;transform:scale(1)}
+    .big-cta:active span{color:var(--orange-2)}
+  }
+
+  @media (max-width:1024px){
+    .container{width:min(1120px,100% - 48px)}
+    .grid4,.grid3{gap:14px}
+    .card-light,.card-dark{padding:20px 16px}
+    .card-light h3{font-size:20px}
+  }
   @media (max-width:900px){
     .grid4{grid-template-columns:repeat(2,1fr)}
+    .card-dark{min-height:0}
+    .contacts-wrap{gap:28px}
+    .big-cta{width:190px;height:190px;font-size:16px}
+  }
+  @media (max-width:767px){
     .grid3{grid-template-columns:1fr}
     .contacts-wrap{grid-template-columns:1fr}
     .contact-list{max-width:none}
   }
   @media (max-width:720px){
-    .burger{display:block}
-    .nav{position:absolute;top:var(--header-h);left:0;right:0;flex-direction:column;padding:12px 16px;background:rgba(5,8,42,.96);display:none}
-    .nav.open{display:flex}
-    .header{background:rgba(5,8,42,.75);backdrop-filter:blur(12px)}
-    .gallery{grid-template-columns:repeat(2,1fr)}
-    section{padding:70px 0}
+    .burger{display:grid;place-items:center;width:44px;height:44px;margin-right:-8px}
+    .nav{position:absolute;top:var(--header-h);left:0;right:0;flex-direction:column;gap:4px;padding:10px 16px 16px;
+      background:rgba(5,8,42,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:none;
+      border-bottom:1px solid rgba(255,255,255,.08)}
+    .nav.open{display:flex;animation:nav-in .25s ease}
+    .nav a{font-size:16px;padding:12px 16px}
+    @keyframes nav-in{from{opacity:0;transform:translateY(-8px)}}
+    .header{background:rgba(5,8,42,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+    section{padding:64px 0}
+    .panel > .marquee + .container{padding-top:64px}
+    .panel:not(.hero){border-radius:24px 24px 0 0}
+    .marquee span{font-size:15px;padding:7px 10px}
   }
-  @media (max-width:480px){
+  @media (max-width:600px){
+    :root{--header-h:58px}
+    .container{width:min(1120px,100% - 32px)}
+    .hero .container{padding:96px 0 48px}
+    .badge{margin-bottom:20px}
+    .hero p{font-size:15px;margin:18px auto 24px}
+    .btns{flex-direction:column;align-items:center}
+    .btns .btn{width:100%;max-width:320px;text-align:center;padding:14px 22px}
+    .hero-logo{width:130px;height:130px;font-size:48px;margin-top:40px}
+    .lead{margin:12px auto 32px}
     .grid4{grid-template-columns:1fr}
-    .gallery{grid-template-columns:1fr}
+    .card-about{font-size:14px;padding:18px}
+    /* галерея: 2 колонки, вертикальные плитки — постеры видно лучше */
+    .gallery{grid-template-columns:repeat(2,1fr);gap:10px}
+    .tile{aspect-ratio:3/4;border-radius:10px}
+    .tile .ph{font-size:16px}
+    .contact span{font-size:14px}
+    .big-cta{width:170px;height:170px;font-size:15px;margin-top:4px}
+    .footer .container{flex-direction:column;text-align:center}
+    .footer nav{justify-content:center;gap:6px 14px}
+    .footer nav a{padding:6px 2px}
+    /* выделенная плашка на узком экране увеличивается меньше, чтобы не упираться в края */
+    .card-light.selected,.card-dark.selected,.card-about.selected,.tile.selected{transform:translateY(-4px) scale(1.03)}
+  }
+  @media (max-width:380px){
+    .brand{font-size:13px;gap:8px}
+    .hero h1{font-size:36px}
+    .gallery{gap:8px}
+  }
+  /* сенсорный фонарик — компактнее */
+  @media (pointer:coarse){
+    #glow{width:280px;height:280px;margin:-140px 0 0 -140px}
   }
 </style>
 </head>
@@ -465,7 +535,18 @@
 
   const links = [...nav.querySelectorAll('a')];
   addEventListener('scroll', onScroll, {passive:true});
-  addEventListener('resize', () => { layoutPanels(); onScroll(); });
+  // на телефоне адресная строка при прокрутке меняет высоту окна на ~50–100px —
+  // пересчитываем слайды только при реальном изменении размера, чтобы ничего не дёргалось
+  let lastW = innerWidth, lastH = innerHeight;
+  addEventListener('resize', () => {
+    if (innerWidth === lastW && Math.abs(innerHeight - lastH) < 120) return onScroll();
+    lastW = innerWidth; lastH = innerHeight;
+    layoutPanels(); onScroll();
+  });
+  // закрыть мобильное меню тапом мимо него
+  document.addEventListener('click', e => {
+    if (nav.classList.contains('open') && !e.target.closest('#nav, #burger')) nav.classList.remove('open');
+  });
   addEventListener('load', () => { layoutPanels(); onScroll(); });
   layoutPanels(); onScroll();
 
@@ -496,7 +577,8 @@
   });
 
   /* след за курсором: плавная лента от синего к оранжевому, только для мыши */
-  if (matchMedia('(pointer:fine)').matches && !matchMedia('(prefers-reduced-motion:reduce)').matches) {
+  // мышь — след и фонарик за курсором; телефон/планшет — за пальцем, пока он ведёт по экрану
+  if (!matchMedia('(prefers-reduced-motion:reduce)').matches) {
     const cv = document.createElement('canvas');
     cv.id = 'trail';
     document.body.appendChild(cv);
@@ -518,6 +600,13 @@
     resize(); addEventListener('resize', resize);
     addEventListener('mousemove', e => { mouse = {x: e.clientX, y: e.clientY}; if (!pos) { pos = {...mouse}; gx = mouse.x; gy = mouse.y; } });
     document.addEventListener('mouseleave', () => { mouse = null; });
+    const touchAt = e => { const t = e.touches[0]; return {x: t.clientX, y: t.clientY}; };
+    addEventListener('touchstart', e => {
+      mouse = touchAt(e); pos = {...mouse}; gx = mouse.x; gy = mouse.y; pts = [];   // новый мазок, без линии от прошлого касания
+    }, {passive: true});
+    addEventListener('touchmove', e => { mouse = touchAt(e); }, {passive: true});
+    addEventListener('touchend', () => { mouse = null; }, {passive: true});
+    addEventListener('touchcancel', () => { mouse = null; }, {passive: true});
 
     const mix = t => from.map((c, i) => Math.round(c + (to[i] - c) * t)).join(',');
 
